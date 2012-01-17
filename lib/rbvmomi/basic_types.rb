@@ -147,9 +147,15 @@ class DataObject < ObjectWithProperties
       props = @props.sort_by { |k,v| k.to_s }
       q.seplist props, nil, :each do |k, v|
         q.group do
-          q.text k.to_s
-          q.text ': '
-          q.pp v
+          if v.nil? and k.class == Array and k.size == 2
+            q.text k[0]
+            q.text ': '
+            q.pp k[1]
+          else
+            q.text k.to_s
+            q.text ': '
+            q.pp v
+          end
         end
       end
     end
