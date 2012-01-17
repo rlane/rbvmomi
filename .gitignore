@@ -7,3 +7,4 @@ doc
 .yardoc
 *.rbc
 coverage
+.DS_Store
