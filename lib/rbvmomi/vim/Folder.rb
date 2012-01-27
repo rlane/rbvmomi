@@ -169,6 +169,11 @@ class RbVmomi::VIM::Folder
     rec = lambda { |parent| Hash[(children[parent]||[]).map { |x| [x, rec[x.obj]] }] }
     rec[self]
   end
+  
+  # Utility function that allows for an autovivifying hash
+  def chain_hash
+    Hash.new {|x,i| x[i] = chain_hash}
+  end
 
   # Efficiently retrieve properties from descendants of this folder.
   #
@@ -185,7 +190,7 @@ class RbVmomi::VIM::Folder
   # @deprecated
   def inventory propSpecs={}
     inv = inventory_flat propSpecs
-    tree = { self => {} }
+    tree = chain_hash
     inv.each do |obj,x|
       next if obj == self
       h = Hash[x.propSet.map { |y| [y.name, y.val] }]
