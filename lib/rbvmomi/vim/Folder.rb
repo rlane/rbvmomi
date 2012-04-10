@@ -53,6 +53,21 @@ class RbVmomi::VIM::Folder
     x if x.is_a? type
   end
 
+  # Retrieve a virtual machine or host by Instance UUID.
+  # @param uuid [String] The UUID to find.
+  # @param type [Class] Return nil unless the found entity <tt>is_a? type</tt>.
+  # @param dc [RbVmomi::VIM::Datacenter] Restricts the query to entities in the given Datacenter.
+  # @return [VIM::ManagedEntity]
+  def findByInstanceUuid uuid, type=RbVmomi::VIM::VirtualMachine, dc=nil
+    propSpecs = {
+      :entity => self, :uuid => uuid, :instanceUuid => true,
+      :vmSearch => type == RbVmomi::VIM::VirtualMachine
+    }
+    propSpecs[:datacenter] = dc if dc
+    x = _connection.searchIndex.FindByUuid(propSpecs)
+    x if x.is_a? type
+  end
+
   # Alias to <tt>traverse path, type, true</tt>
   # @see #traverse
   def traverse! path, type=Object
