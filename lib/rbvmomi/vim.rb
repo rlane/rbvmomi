@@ -40,6 +40,50 @@ class VIM < Connection
     end
   end
 
+  # Connect to a vSphere SDK endpoint using extension and a certificate
+  #
+  # @param [Hash] opts The options hash.
+  # @option opts [String]  :host (sdkTunnel) Host to connect to.
+  # @option opts [Numeric] :port (8089) Port to connect to.
+  # @option opts [String]  :proxyHost Host to connect to.
+  # @option opts [Numeric] :proxyPort (80) Port to connect to.
+  # @option opts [Boolean] :ssl (true) Whether to use SSL.
+  # @option opts [Boolean] :insecure (false) If true, ignore SSL certificate errors.
+  # @option opts [String]  :extension_key Extension key.
+  # @option opts [String]  :path (/sdkTunnel) SDK endpoint path.
+  # @option opts [String]  :cert Path to the certificate
+  # @option opts [String]  :key Path to the private key
+  # @option opts [String]  :path (/sdkTunnel) SDK endpoint path.
+  # @option opts [Boolean] :debug (false) If true, print SOAP traffic to stderr.
+  def self.connect_extension_by_certificate opts
+    fail unless opts.is_a? Hash
+    fail "proxy host option required" unless opts[:proxyHost]
+    fail "extension key required" unless opts[:extension_key]
+    fail "certificate required" unless opts[:cert]
+    fail "private key required" unless opts[:key]
+
+    opts[:host] ||= 'sdkTunnel'
+    opts[:port] ||= 8089
+    opts[:proxyPort] ||= 80
+    opts[:ssl] = true unless opts.member? :ssl or opts[:"no-ssl"]
+    opts[:insecure] ||= false
+    opts[:path] ||= '/sdkTunnel'
+    opts[:cert] = File.read(opts[:cert])
+    opts[:key] = File.read(opts[:key])
+    opts[:ns] ||= 'urn:vim25'
+    rev_given = opts[:rev] != nil
+    opts[:rev] = '4.0' unless rev_given
+    opts[:debug] = (!ENV['RBVMOMI_DEBUG'].empty? rescue false) unless opts.member? :debug
+
+    new(opts).tap do |vim|
+      vim.serviceContent.sessionManager.LoginExtensionByCertificate :extensionKey => opts[:extension_key]
+      unless rev_given
+        rev = vim.serviceContent.about.apiVersion
+        vim.rev = [rev, '5.0'].min
+      end
+    end
+  end
+
   def close
     VIM::SessionManager(self, 'SessionManager').Logout rescue RbVmomi::Fault
     self.cookie = nil
