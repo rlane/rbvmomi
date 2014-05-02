@@ -50,8 +50,9 @@ class RbVmomi::VIM::Datastore
     fail "upload failed" unless $?.success?
   end
 
-  # Returns the file's full path in the datastore (excluding datastore name)
+  # Find the file's full path in the datastore (excluding datastore name)
   # @params file [String]
+  # @return [String] of the file's path
   def find_file_path file
     @results = files_in_sub(nil)
     @results.each do |result|
@@ -63,6 +64,10 @@ class RbVmomi::VIM::Datastore
     fail "Could not find file"
   end
 
+  # Return's the fileInfo for a specified file
+  # @params file [String] the file for which fileInfo is to be returned
+  # @params path (optional) the path for the file
+  # @return [FileInfo] object for the file
   def get_file_info(options={})
     @file = options[:file]
     @path = options[:path]
@@ -82,7 +87,7 @@ class RbVmomi::VIM::Datastore
     fail "Could not find file"
   end
 
-  # Returns all files in a datastore path and sub-directories
+  # Find all files in a datastore path and sub-directories
   # @param path (optional) [String] Path to search for file under
   # @return [Array] of files found
   def files_in_sub path
@@ -102,7 +107,7 @@ class RbVmomi::VIM::Datastore
     @return
   end
 
-  # Returns all files in a datastore path
+  # Find all files in a datastore path
   # @param path (optional) [String] Path to search for file under
   # @return [Array] of files found
   def files_in_dir path

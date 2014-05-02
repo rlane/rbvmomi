@@ -23,6 +23,7 @@ class RbVmomi::VIM::VirtualMachine
   # @param vmdk_path (optional) [String] the path to the vmdk file
   # @param controller (optional) [String] the controller to add the VirtualDisk to. 
   #   Defaults to "SCSI controller 0"
+  # @return nil on success
   def add_vmdk(options={})
     defaults = {
       :controller => "SCSI controller 0",
@@ -75,6 +76,7 @@ class RbVmomi::VIM::VirtualMachine
   # @param vmdk [String] the name of the disk file we want to remove
   # @param vmdk_path (optional) [String] the path to the disk file
   # @param destroy (optional) [Boolean] whether or not to delete the underlying disk file
+  # @return nil on success
   def remove_disk(options={})
     defaults = {
       :destroy => false,
@@ -114,7 +116,9 @@ class RbVmomi::VIM::VirtualMachine
     ReconfigVM_Task(:spec => @vm_spec).wait_for_completion
   end
 
-  # Expects the full path to the file
+  # Find a disk attached to this VM
+  # @param file [String] the name of the file for the VirtualDisk
+  # @param datastore [RbVmomi::VIM::Datastore] the datastore to look for the disk in
   def find_disk(options={})
     @file = options[:file]
     @datastore = options[:datastore]
