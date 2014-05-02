@@ -125,9 +125,8 @@ class RbVmomi::VIM::VirtualMachine
     @datastore = options[:datastore]
 
     @disk = nil
-    @devices = self.config.hardware.device
+    @devices = self.disks
     @devices.each do |device|
-      next unless device.is_a? RbVmomi::VIM::VirtualDisk
       next unless device.backing.is_a? RbVmomi::VIM::VirtualDeviceFileBackingInfo
       @device_datastore,@device_file = device.backing.fileName.gsub(/(\[|\])/, '').split(' ')
       if @device_file == @file and @device_datastore == @datastore.info.name
