@@ -50,7 +50,42 @@ class RbVmomi::VIM::Datastore
     fail "upload failed" unless $?.success?
   end
 
+  # Find a file in the sub-directories of a datastore
+  # The last match is returned
+  def find_file_path file
+    @results = find_file(file)
+    @results.each do |result|
+    result.file.each do |file_info|
+      return result.folderPath if file == file_info.path
+    end
+  end
+
+  fail "Could not find file"
+  end
+
+  def get_file_info file
+    @results = find_file(file)
+    @results.each do |result|
+      result.file.each do |file_info|
+        return file_info if file == file_info.path
+      end
+    end
+
+    fail "Could not find file"
+  end
+
   private
+
+  def find_file file
+    @ds_path = "[#{self.info.name}]"
+    
+    @disk_flags = RbVmomi::VIM::VmDiskFileQueryFlags.new(:capacityKb => true, :diskType => true, :thin => false, :hardwareVersion => false)
+    @disk_query = RbVmomi::VIM::VmDiskFileQuery.new(:details => @disk_flags)
+    @detail_flags = RbVmomi::VIM::FileQueryFlags.new(:fileOwner => false, :fileSize => false, :fileType => true, :modification => false)
+
+    @query_spec = RbVmomi::VIM::HostDatastoreBrowserSearchSpec.new(:query => [*@disk_query], :details => @detail_flags)
+  self.browser.SearchDatastoreSubFolders_Task(:datastorePath => @ds_path, :searchSpec => @query_spec).wait_for_completion
+  end
 
   def datacenter
     return @datacenter if @datacenter
