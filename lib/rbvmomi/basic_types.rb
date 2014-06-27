@@ -9,7 +9,7 @@ BUILTIN = Set.new %w(ManagedObject DataObject TypeName PropertyPath ManagedObjec
 
 class Base
   class << self
-    attr_reader :wsdl_name
+    attr_accessor :wsdl_name
 
     def init wsdl_name=self.name
       @wsdl_name = wsdl_name
@@ -158,6 +158,12 @@ class DataObject < ObjectWithProperties
     q.text ')'
   end
 
+  def to_json(*args)
+    h = self.props
+    m = h.merge({ JSON.create_id => self.class.name })
+    m.to_json(*args)
+  end
+
   init
 end
 
@@ -185,7 +191,9 @@ class ManagedObject < ObjectWithMethods
       :objectSet => [{ :obj => self }],
     }])[0]
 
-    if ret.propSet.empty?
+    if !ret
+      return nil
+    elsif ret.propSet.empty?
       return nil if ret.missingSet.empty?
       raise ret.missingSet[0].fault
     else
@@ -216,7 +224,9 @@ class ManagedObject < ObjectWithMethods
   end
 
   def == x
-    x.class == self.class and x._ref == @ref
+    out = (x.class == self.class && x._ref == @ref) 
+    out = (x._connection.instanceUuid == self._connection.instanceUuid) if out && x._connection.host
+    out
   end
 
   alias eql? ==
@@ -335,6 +345,18 @@ end
 
 class ::Float
   def self.wsdl_name; 'xsd:float' end
+end
+
+class Int
+  def self.wsdl_name; 'xsd:int' end
+  
+  def initialize x
+    @val = x
+  end
+  
+  def to_s
+    @val.to_s
+  end
 end
 
 class KeyValue
