@@ -1,3 +1,7 @@
+# frozen_string_literal: true
+# Copyright (c) 2011-2017 VMware, Inc.  All Rights Reserved.
+# SPDX-License-Identifier: MIT
+
 class RbVmomi::VIM::ManagedObject
   # Wait for updates on an object until a condition becomes true.
   #
@@ -8,13 +12,13 @@ class RbVmomi::VIM::ManagedObject
   # @todo Pass the current property values to the block.
   def wait_until *pathSet, &b
     all = pathSet.empty?
-    filter = _connection.propertyCollector.CreateFilter :spec => {
-      :propSet => [{ :type => self.class.wsdl_name, :all => all, :pathSet => pathSet }],
-      :objectSet => [{ :obj => self }],
-    }, :partialUpdates => false
+    filter = _connection.propertyCollector.CreateFilter spec: {
+      propSet: [{ type: self.class.wsdl_name, all: all, pathSet: pathSet }],
+      objectSet: [{ obj: self }],
+    }, partialUpdates: false
     ver = ''
     loop do
-      result = _connection.propertyCollector.WaitForUpdates(:version => ver)
+      result = _connection.propertyCollector.WaitForUpdates(version: ver)
       ver = result.version
       if x = b.call
         return x
@@ -29,13 +33,18 @@ class RbVmomi::VIM::ManagedObject
   # @return [Hash] Hash from property paths to values.
   def collect! *pathSet
     spec = {
-      :objectSet => [{ :obj => self }],
-      :propSet => [{
-        :pathSet => pathSet,
-        :type => self.class.wsdl_name
+      objectSet: [{ obj: self }],
+      propSet: [{
+        pathSet: pathSet,
+        type: self.class.wsdl_name
       }]
     }
-    _connection.propertyCollector.RetrieveProperties(:specSet => [spec])[0].to_hash
+    ret = _connection.propertyCollector.RetrieveProperties(specSet: [spec])
+    if ret && ret.length > 0
+      ret[0].to_hash
+    else
+      {}
+    end
   end
 
   # Efficiently retrieve multiple properties from an object.
@@ -44,7 +53,7 @@ class RbVmomi::VIM::ManagedObject
   # @return [Array] Property values in same order as +pathSet+, or the return
   #                 value from the block if it is given.
   def collect *pathSet
-    h = collect! *pathSet
+    h = collect!(*pathSet)
     a = pathSet.map { |k| h[k.to_s] }
     if block_given?
       yield a

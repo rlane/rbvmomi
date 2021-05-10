@@ -1,3 +1,7 @@
+# frozen_string_literal: true
+# Copyright (c) 2011-2017 VMware, Inc.  All Rights Reserved.
+# SPDX-License-Identifier: MIT
+
 class RbVmomi::VIM::ObjectUpdate
   # Represent this ObjectUpdate as a hash.
   # @return [Hash] A hash from property paths to values.
@@ -15,7 +19,8 @@ class RbVmomi::VIM::ObjectUpdate
   def to_hash_uncached
     h = {}
     changeSet.each do |x|
-      fail if h.member? x.name
+      raise if h.member? x.name
+
       h[x.name] = x.val
     end
     h

@@ -1,45 +1,21 @@
-require 'rake/testtask'
-require 'rake/rdoctask'
-require 'yard'
+# frozen_string_literal: true
+# Copyright (c) 2010-2017 VMware, Inc.  All Rights Reserved.
+# SPDX-License-Identifier: MIT
 
-begin
-  require 'jeweler'
-  Jeweler::Tasks.new do |gem|
-    gem.name = "rbvmomi"
-    gem.summary = "Ruby interface to the VMware vSphere API"
-    #gem.description = ""
-    gem.email = "rlane@vmware.com"
-    gem.homepage = "https://github.com/rlane/rbvmomi"
-    gem.authors = ["Rich Lane"]
-    gem.add_dependency 'nokogiri', '>= 1.4.1'
-    gem.add_dependency 'builder'
-    gem.add_dependency 'trollop'
-    gem.required_ruby_version = '>= 1.8.7'
-    gem.files.include 'vmodl.db'
-    gem.files.include '.yardopts'
-  end
-rescue LoadError
-  puts "Jeweler not available. Install it with: gem install jeweler"
-end
+require 'bundler/gem_tasks'
+require 'rake/testtask'
+require 'yard'
+require 'rubocop/rake_task'
+
+task(default: :test)
 
 Rake::TestTask.new do |t|
-  t.libs << "test"
+  t.libs << 'test'
   t.test_files = FileList['test/test_*.rb']
   t.verbose = true
+  t.warning = true
 end
+
+RuboCop::RakeTask.new
 
 YARD::Rake::YardocTask.new
-
-begin
-  require 'rcov/rcovtask'
-  desc 'Measures test coverage using rcov'
-  Rcov::RcovTask.new do |rcov|
-    rcov.pattern    = 'test/test_*.rb'
-    rcov.output_dir = 'coverage'
-    rcov.verbose    = true
-    rcov.libs << "test"
-    rcov.rcov_opts << '--exclude "gems/*"'
-  end
-rescue LoadError
-  puts "Rcov not available. Install it with: gem install rcov"
-end

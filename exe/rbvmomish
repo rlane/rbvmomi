@@ -1,41 +1,42 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 # TODO keepalive
 # TODO rc file
 # TODO proxy support?
-require 'trollop'
+require 'optimist'
 require 'readline'
 require 'rbvmomi'
-require 'rbvmomi/trollop'
+require 'rbvmomi/optimist'
 
 VIM = RbVmomi::VIM
 
-opts = Trollop.options do
-  banner <<-EOS
-vSphere API console.
-
-Usage:
-       rbvmomish [options]
-
-Predefined methods:
-conn: Returns the VIM connection
-si: Returns the ServiceInstance
-help: Displays this text.
-
-Special syntax:
-Adding a '#' suffix to an expression displays information about the type of the
-result, including its properties and methods, instead of the value.
-
-VIM connection options:
+opts = Optimist.options do
+  banner <<~EOS
+    vSphere API console.
+    #{}
+    Usage:
+           rbvmomish [options]
+    #{}
+    Predefined methods:
+    conn: Returns the VIM connection
+    si: Returns the ServiceInstance
+    help: Displays this text.
+    #{}
+    Special syntax:
+    Adding a '#' suffix to an expression displays information about the type of the
+    result, including its properties and methods, instead of the value.
+    #{}
+    VIM connection options:
   EOS
 
   rbvmomi_connection_opts
 
-  text <<-EOS
-
-Other options:
+  text <<~EOS
+    #{}
+    Other options:
   EOS
 
-  $trollop = self
+  $optimist = self
 end
 
 begin
@@ -45,9 +46,10 @@ rescue Errno::EHOSTUNREACH
 end
 
 typenames = VIM.loader.typenames
-Readline.completion_append_character = " "
+Readline.completion_append_character = ' '
 Readline.completion_proc = lambda do |word|
   return unless word
+
   prefix_regex = /^#{Regexp.escape(word)}/
   candidates = typenames.sort
   candidates.find_all { |e| e.match(prefix_regex) }
@@ -68,13 +70,13 @@ def type name
   elsif klass < VIM::ManagedObject
     puts "Managed Object #{klass}"
     puts
-    puts "Properties:"
+    puts 'Properties:'
     klass.full_props_desc.each do |desc|
       puts " #{desc['name']}: #{q[desc['wsdl_type']]}#{desc['is-array'] ? '[]' : ''}"
     end
     puts
-    puts "Methods:"
-    klass.full_methods_desc.sort_by(&:first).each do |name,desc|
+    puts 'Methods:'
+    klass.full_methods_desc.sort_by(&:first).each do |name, desc|
       params = desc['params']
       puts " #{name}(#{params.map { |x| "#{x['name']} : #{q[x['wsdl_type'] || 'void']}#{x['is-array'] ? '[]' : ''}" } * ', '}) : #{q[desc['result']['wsdl_type'] || 'void']}"
     end
@@ -102,37 +104,37 @@ def si
 end
 
 def help
-  $trollop.educate
+  $optimist.educate
   :no_result
 end
 
 $binding = $vim.instance_eval { binding }
 
 loop do
-begin
-  input = Readline.readline("#{opts[:host]}> ", false) or break
-  input = input.strip
-  next if input.empty?
+  begin
+    input = Readline.readline("#{opts[:host]}> ", false) or break
+    input = input.strip
+    next if input.empty?
 
-  (history.puts input; Readline::HISTORY << input) unless input == Readline::HISTORY.to_a[-1]
+    (history.puts input; Readline::HISTORY << input) unless input == Readline::HISTORY.to_a[-1]
 
-  result = eval(input, $binding)
-  if input =~ /\#$/
-    type result.class.wsdl_name
-  else
-    pp result unless result == :no_result
+    result = eval(input, $binding)
+    if input =~ /\#$/
+      type result.class.wsdl_name
+    else
+      pp result unless result == :no_result
+    end
+  rescue SystemExit, IOError
+    raise
+  rescue RuntimeError, RbVmomi::Fault
+    puts "#{$!.class}: #{$!.message}"
+    puts $!.backtrace * "\n"
+  rescue UserError
+    puts $!.message
+  rescue Interrupt
+    puts
+  rescue Exception
+    puts "#{$!.class}: #{$!.message}"
+    puts $!.backtrace * "\n"
   end
-rescue SystemExit, IOError
-  raise
-rescue RuntimeError, RbVmomi::Fault
-  puts "#{$!.class}: #{$!.message}"
-  puts $!.backtrace * "\n"
-rescue UserError
-  puts $!.message
-rescue Interrupt
-  puts
-rescue Exception
-  puts "#{$!.class}: #{$!.message}"
-  puts $!.backtrace * "\n"
-end
 end

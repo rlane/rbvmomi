@@ -1,35 +1,39 @@
+# frozen_string_literal: true
+# Copyright (c) 2011-2017 VMware, Inc.  All Rights Reserved.
+# SPDX-License-Identifier: MIT
+
 require 'rbvmomi'
-require 'rbvmomi/trollop'
+require 'rbvmomi/optimist'
 
-opts = Trollop.options do
-  banner <<-EOS
-Example 1 from the README: Power on a VM.
-
-Usage:
-    readme-1.rb [options] VM name
-
-VIM connection options:
+opts = Optimist.options do
+  banner <<~EOS
+    Example 1 from the README: Power on a VM.
+    #{}
+    Usage:
+        readme-1.rb [options] VM name
+    #{}
+    VIM connection options:
     EOS
 
-    rbvmomi_connection_opts
+  rbvmomi_connection_opts
 
-    text <<-EOS
-
-VM location options:
+  text <<~EOS
+    #{}
+    VM location options:
     EOS
 
-    rbvmomi_datacenter_opt
+  rbvmomi_datacenter_opt
 
-    text <<-EOS
-
-Other options:
-  EOS
+  text <<~EOS
+    #{}
+    Other options:
+    EOS
 end
 
-Trollop.die("must specify host") unless opts[:host]
-vm_name = ARGV[0] or abort "must specify VM name"
+Optimist.die('must specify host') unless opts[:host]
+vm_name = ARGV[0] or abort 'must specify VM name'
 
 vim = RbVmomi::VIM.connect opts
-dc = vim.serviceInstance.find_datacenter(opts[:datacenter]) or fail "datacenter not found"
-vm = dc.find_vm(vm_name) or fail "VM not found"
+dc = vim.serviceInstance.find_datacenter(opts[:datacenter]) or raise 'datacenter not found'
+vm = dc.find_vm(vm_name) or raise 'VM not found'
 vm.PowerOnVM_Task.wait_for_completion

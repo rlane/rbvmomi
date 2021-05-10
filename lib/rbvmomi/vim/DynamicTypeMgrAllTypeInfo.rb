@@ -1,3 +1,7 @@
+# frozen_string_literal: true
+# Copyright (c) 2011-2017 VMware, Inc.  All Rights Reserved.
+# SPDX-License-Identifier: MIT
+
 class RbVmomi::VIM::DynamicTypeMgrAllTypeInfo
   def toRbvmomiTypeHash
     id2name = {}
@@ -31,14 +35,14 @@ class RbVmomi::VIM::DynamicTypeMgrAllTypeInfo
     end
 
     types = {}
-    self.managedTypeInfo.each{|x| types.merge!(x.toRbvmomiTypeHash) }
-    self.dataTypeInfo.each{|x| types.merge!(x.toRbvmomiTypeHash) }
+    self.managedTypeInfo.each{ |x| types.merge!(x.toRbvmomiTypeHash) }
+    self.dataTypeInfo.each{ |x| types.merge!(x.toRbvmomiTypeHash) }
 
-    types.each do |k,t|
+    types.each do |k, t|
       id2name[t['type-id']] = k
     end
 
-    types = Hash[types.map do |k,t|
+    types = Hash[types.map do |k, t|
       case t['kind']
       when 'data'
         t['wsdl_base'] = t['base-type-id'] ? id2name[t['base-type-id']] : 'DataObject'
@@ -54,7 +58,7 @@ class RbVmomi::VIM::DynamicTypeMgrAllTypeInfo
           x['wsdl_type'] = id2name[x['type-id-ref']]
           x.delete 'type-id-ref'
         end
-        t['methods'].each do |mName,x|
+        t['methods'].each do |mName, x|
           if y = x['result']
             y['wsdl_type'] = id2name[y['type-id-ref']]
             #y.delete 'type-id-ref'
@@ -65,7 +69,7 @@ class RbVmomi::VIM::DynamicTypeMgrAllTypeInfo
           end
         end
       when 'enum'
-      else fail
+      else raise
       end
       [k, t]
     end]

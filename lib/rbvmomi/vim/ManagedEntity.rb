@@ -1,38 +1,42 @@
+# frozen_string_literal: true
+# Copyright (c) 2011-2017 VMware, Inc.  All Rights Reserved.
+# SPDX-License-Identifier: MIT
+
 class RbVmomi::VIM::ManagedEntity
   # Retrieve the ancestors of the entity.
   # @return [Array] Ancestors of this entity, starting with the root.
   def path
     self.class.paths([self])[self]
   end
-  
+
   # Retrieve the ancestors of a list of entries.
   # @return [Hash] Object-indexed hash of ancestors of entities, starting with the root.
   def self.paths objs
     filterSpec = RbVmomi::VIM.PropertyFilterSpec(
-      :objectSet => objs.map do |obj|
+      objectSet: objs.map do |obj|
         RbVmomi::VIM.ObjectSpec(
-          :obj => obj,
-          :selectSet => [
+          obj: obj,
+          selectSet: [
             RbVmomi::VIM.TraversalSpec(
-              :name => "tsME",
-              :type => 'ManagedEntity',
-              :path => 'parent',
-              :skip => false,
-              :selectSet => [
-                RbVmomi::VIM.SelectionSpec(:name => "tsME")
+              name: 'tsME',
+              type: 'ManagedEntity',
+              path: 'parent',
+              skip: false,
+              selectSet: [
+                RbVmomi::VIM.SelectionSpec(name: 'tsME')
               ]
             )
           ]
         )
       end,
-      :propSet => [{
-        :pathSet => %w(name parent),
-        :type => 'ManagedEntity'
+      propSet: [{
+        pathSet: %w(name parent),
+        type: 'ManagedEntity'
       }]
     )
 
     propCollector = objs.first._connection.propertyCollector
-    result = propCollector.RetrieveProperties(:specSet => [filterSpec])
+    result = propCollector.RetrieveProperties(specSet: [filterSpec])
 
     Hash[objs.map do |obj|
       tree = {}

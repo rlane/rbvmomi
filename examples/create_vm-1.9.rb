@@ -1,40 +1,45 @@
 #!/usr/bin/env ruby
-require 'trollop'
+# frozen_string_literal: true
+
+# Copyright (c) 2011-2017 VMware, Inc.  All Rights Reserved.
+# SPDX-License-Identifier: MIT
+
+require 'optimist'
 require 'rbvmomi'
-require 'rbvmomi/trollop'
+require 'rbvmomi/optimist'
 
 VIM = RbVmomi::VIM
 
-opts = Trollop.options do
-  banner <<-EOS
-Create a VM.
+opts = Optimist.options do
+  banner <<~EOS
+    Create a VM.
 
-Usage:
-    create_vm-1.9.rb [options]
+    Usage:
+        create_vm-1.9.rb [options]
 
-VIM connection options:
+    VIM connection options:
     EOS
 
-    rbvmomi_connection_opts
+  rbvmomi_connection_opts
 
-    text <<-EOS
+  text <<~EOS
 
-VM location options:
+    VM location options:
     EOS
 
-    rbvmomi_datacenter_opt
+  rbvmomi_datacenter_opt
 
-    text <<-EOS
+  text <<~EOS
 
-Other options:
-  EOS
+    Other options:
+    EOS
 end
 
-Trollop.die("must specify host") unless opts[:host]
-vm_name = ARGV[0] or abort "must specify VM name"
+Optimist.die('must specify host') unless opts[:host]
+vm_name = ARGV[0] or abort 'must specify VM name'
 
 vim = VIM.connect opts
-dc = vim.serviceInstance.find_datacenter(opts[:datacenter]) or abort "datacenter not found"
+dc = vim.serviceInstance.find_datacenter(opts[:datacenter]) or abort 'datacenter not found'
 vmFolder = dc.vmFolder
 hosts = dc.hostFolder.children
 rp = hosts.first.resourcePool
@@ -90,4 +95,4 @@ vm_cfg = {
   ]
 }
 
-vmFolder.CreateVM_Task(:config => vm_cfg, :pool => rp).wait_for_completion
+vmFolder.CreateVM_Task(config: vm_cfg, pool: rp).wait_for_completion

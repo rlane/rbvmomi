@@ -1,3 +1,7 @@
+# frozen_string_literal: true
+# Copyright (c) 2011-2017 VMware, Inc.  All Rights Reserved.
+# SPDX-License-Identifier: MIT
+
 class RbVmomi::VIM::Datacenter
   # Traverse the given inventory +path+ to find a ComputeResource.
   def find_compute_resource path
@@ -12,6 +16,11 @@ class RbVmomi::VIM::Datacenter
   # Traverse the given inventory +path+ to find a VirtualMachine.
   def find_vm path
     vmFolder.traverse path, RbVmomi::VIM::VirtualMachine
+  end
+
+  # Traverse the given inventory +path+ to find a Folder.
+  def find_folder path
+    vmFolder.traverse path, RbVmomi::VIM::Folder
   end
 end
 

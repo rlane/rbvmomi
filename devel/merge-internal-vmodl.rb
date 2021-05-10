@@ -1,10 +1,15 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Copyright (c) 2011-2017 VMware, Inc.  All Rights Reserved.
+# SPDX-License-Identifier: MIT
+
 # These types are not public and so may change between releases. Do not
 # use them directly.
 
-public_vmodl_filename = ARGV[0] or abort "public vmodl filename required"
-internal_vmodl_filename = ARGV[1] or abort "internal vmodl filename required"
-output_vmodl_filename = ARGV[2] or abort "output vmodl filename required"
+public_vmodl_filename = ARGV[0] or abort 'public vmodl filename required'
+internal_vmodl_filename = ARGV[1] or abort 'internal vmodl filename required'
+output_vmodl_filename = ARGV[2] or abort 'output vmodl filename required'
 
 TYPES = %w(
 DVSKeyedOpaqueData
@@ -46,14 +51,15 @@ internal_vmodl = File.open(internal_vmodl_filename, 'r') { |io| Marshal.load io 
 
 TYPES.each do |k|
   puts "Merging in #{k}"
-  fail unless internal_vmodl.member? k
+  raise "Couldn't find type #{k} in internal VMODL" unless internal_vmodl.member? k
+
   public_vmodl[k] = internal_vmodl[k]
 end
 
 METHODS.each do |x|
   puts "Merging in #{x}"
   type, method = x.split '.'
-  public_vmodl[type]['methods'][method] = internal_vmodl[type]['methods'][method] or fail
+  public_vmodl[type]['methods'][method] = internal_vmodl[type]['methods'][method] or raise
 end
 
 File.open(output_vmodl_filename, 'w') { |io| Marshal.dump public_vmodl, io }

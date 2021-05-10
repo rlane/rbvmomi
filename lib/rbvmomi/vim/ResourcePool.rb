@@ -1,9 +1,13 @@
+# frozen_string_literal: true
+# Copyright (c) 2011-2017 VMware, Inc.  All Rights Reserved.
+# SPDX-License-Identifier: MIT
+
 class RbVmomi::VIM::ResourcePool
   # Retrieve a child ResourcePool.
   # @param name [String] Name of the child.
   # @return [VIM::ResourcePool]
   def find name
-    _connection.searchIndex.FindChild(:entity => self, :name => name)
+    _connection.searchIndex.FindChild(entity: self, name: name)
   end
 
   # Retrieve a descendant of this ResourcePool.
@@ -11,7 +15,7 @@ class RbVmomi::VIM::ResourcePool
   # @return [VIM::ResourcePool]
   def traverse path
     es = path.split('/').reject(&:empty?)
-    es.inject(self) do |f,e|
+    es.inject(self) do |f, e|
       f.find(e) || return
     end
   end
@@ -19,35 +23,35 @@ class RbVmomi::VIM::ResourcePool
   def resourcePoolSubTree fields = []
     self.class.resourcePoolSubTree [self], fields
   end
-  
+
   def self.resourcePoolSubTree objs, fields = []
     fields = (fields + ['name', 'resourcePool']).uniq
     filterSpec = RbVmomi::VIM.PropertyFilterSpec(
-      :objectSet => objs.map do |obj|
+      objectSet: objs.map do |obj|
         RbVmomi::VIM.ObjectSpec(
-          :obj => obj,
-          :selectSet => [
+          obj: obj,
+          selectSet: [
             RbVmomi::VIM.TraversalSpec(
-              :name => "tsRP",
-              :type => 'ResourcePool',
-              :path => 'resourcePool',
-              :skip => false,
-              :selectSet => [
-                RbVmomi::VIM.SelectionSpec(:name => "tsRP")
+              name: 'tsRP',
+              type: 'ResourcePool',
+              path: 'resourcePool',
+              skip: false,
+              selectSet: [
+                RbVmomi::VIM.SelectionSpec(name: 'tsRP')
               ]
             )
           ]
         )
       end,
-      :propSet => [{
-        :pathSet => fields,
-        :type => 'ResourcePool'
+      propSet: [{
+        pathSet: fields,
+        type: 'ResourcePool'
       }]
     )
-  
+
     propCollector = objs.first._connection.propertyCollector
-    result = propCollector.RetrieveProperties(:specSet => [filterSpec])
-    
+    result = propCollector.RetrieveProperties(specSet: [filterSpec])
+
     Hash[result.map do |x|
       [x.obj, x.to_hash]
     end]

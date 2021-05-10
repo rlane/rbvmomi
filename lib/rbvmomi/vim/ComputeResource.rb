@@ -1,3 +1,7 @@
+# frozen_string_literal: true
+# Copyright (c) 2011-2017 VMware, Inc.  All Rights Reserved.
+# SPDX-License-Identifier: MIT
+
 class RbVmomi::VIM::ComputeResource
   # Aggregate cluster information.
   #
@@ -9,37 +13,38 @@ class RbVmomi::VIM::ComputeResource
   # @return [MB]  usedMem:  Used RAM.
   def stats
     filterSpec = RbVmomi::VIM.PropertyFilterSpec(
-      :objectSet => [{
-        :obj => self,
-        :selectSet => [
+      objectSet: [{
+        obj: self,
+        selectSet: [
           RbVmomi::VIM.TraversalSpec(
-            :name => 'tsHosts',
-            :type => 'ComputeResource',
-            :path => 'host',
-            :skip => false
+            name: 'tsHosts',
+            type: 'ComputeResource',
+            path: 'host',
+            skip: false
           )
         ]
       }],
-      :propSet => [{
-        :pathSet => %w(name overallStatus summary.hardware.cpuMhz
+      propSet: [{
+        pathSet: %w(name overallStatus summary.hardware.cpuMhz
                     summary.hardware.numCpuCores summary.hardware.memorySize
                     summary.quickStats.overallCpuUsage
                     summary.quickStats.overallMemoryUsage),
-        :type => 'HostSystem'
+        type: 'HostSystem'
       }]
     )
 
-    result = _connection.propertyCollector.RetrieveProperties(:specSet => [filterSpec])
+    result = _connection.propertyCollector.RetrieveProperties(specSet: [filterSpec])
 
     stats = {
-      :totalCPU => 0,
-      :totalMem => 0,
-      :usedCPU => 0,
-      :usedMem => 0,
+      totalCPU: 0,
+      totalMem: 0,
+      usedCPU: 0,
+      usedMem: 0,
     }
 
     result.each do |x|
       next if x['overallStatus'] == 'red'
+
       stats[:totalCPU] += x['summary.hardware.cpuMhz'] * x['summary.hardware.numCpuCores']
       stats[:totalMem] += x['summary.hardware.memorySize'] / (1024*1024)
       stats[:usedCPU] += x['summary.quickStats.overallCpuUsage'] || 0

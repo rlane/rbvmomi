@@ -1,4 +1,9 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Copyright (c) 2011-2017 VMware, Inc.  All Rights Reserved.
+# SPDX-License-Identifier: MIT
+
 require 'tempfile'
 
 if ENV['RBVMOMI_COVERAGE'] == '1'
@@ -14,7 +19,7 @@ require 'libxml'
 NS_XSI = 'http://www.w3.org/2001/XMLSchema-instance'
 
 VIM = RbVmomi::VIM
-$conn = VIM.new(:ns => 'urn:vim25', :rev => '4.0')
+$conn = VIM.new(ns: 'urn:vim25', rev: '4.0')
 raw = File.read(ARGV[0])
 
 def diff a, b
@@ -54,45 +59,45 @@ if true
   new_libxml_result = RbVmomi::NewDeserializer.new($conn).deserialize libxml_xml
 
   if new_nokogiri_result != old_nokogiri_result
-    puts "new_nokogiri_result doesnt match old_nokogiri_result"
-    puts "old_nokogiri_result:"
+    puts 'new_nokogiri_result doesnt match old_nokogiri_result'
+    puts 'old_nokogiri_result:'
     pp old_nokogiri_result
-    puts "new_nokogiri_result:"
+    puts 'new_nokogiri_result:'
     pp new_nokogiri_result
-    puts "diff:"
+    puts 'diff:'
     diff old_nokogiri_result, new_nokogiri_result
     exit 1
   end
 
   if new_libxml_result != old_nokogiri_result
-    puts "new_libxml_result doesnt match old_nokogiri_result"
-    puts "old_nokogiri_result:"
+    puts 'new_libxml_result doesnt match old_nokogiri_result'
+    puts 'old_nokogiri_result:'
     pp old_nokogiri_result
-    puts "new_libxml_result:"
+    puts 'new_libxml_result:'
     pp new_libxml_result
-    puts "diff:"
+    puts 'diff:'
     diff old_nokogiri_result, new_libxml_result
     exit 1
   end
 
-  puts "all results match"
+  puts 'all results match'
 end
 
 Benchmark.bmbm do|b|
   GC.start
-  b.report("nokogiri parsing") do
+  b.report('nokogiri parsing') do
     N.times { Nokogiri::XML(raw) }
   end
-  
+
   GC.start
-  b.report("libxml parsing") do
+  b.report('libxml parsing') do
     N.times do
       LibXML::XML::Parser.string(raw).parse
     end
   end
-  
+
   GC.start
-  b.report("old deserialization (nokogiri)") do
+  b.report('old deserialization (nokogiri)') do
     deserializer = RbVmomi::OldDeserializer.new($conn)
     N.times do
       deserializer.deserialize Nokogiri::XML(raw).root
@@ -100,7 +105,7 @@ Benchmark.bmbm do|b|
   end
 
   GC.start
-  b.report("new deserialization (nokogiri)") do
+  b.report('new deserialization (nokogiri)') do
     deserializer = RbVmomi::NewDeserializer.new($conn)
     N.times do
       deserializer.deserialize Nokogiri::XML(raw).root
@@ -108,7 +113,7 @@ Benchmark.bmbm do|b|
   end
 
   GC.start
-  b.report("new deserialization (libxml)") do
+  b.report('new deserialization (libxml)') do
     deserializer = RbVmomi::NewDeserializer.new($conn)
     N.times do
       deserializer.deserialize LibXML::XML::Parser.string(raw).parse.root

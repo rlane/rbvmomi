@@ -1,35 +1,39 @@
+# frozen_string_literal: true
+# Copyright (c) 2011-2017 VMware, Inc.  All Rights Reserved.
+# SPDX-License-Identifier: MIT
+
 # @todo Retrieve ESX log bundles when run against VC.
-require 'trollop'
+require 'optimist'
 require 'rbvmomi'
-require 'rbvmomi/trollop'
+require 'rbvmomi/optimist'
 
 VIM = RbVmomi::VIM
 DEFAULT_SERVER_PLACEHOLDER = '0.0.0.0'
 
-opts = Trollop.options do
-  banner <<-EOS
-Generate and retrieve a log bundle.
-
-Usage:
-    logbundle.rb [options] dest
-
-dest must be a directory.
-
-VIM connection options:
+opts = Optimist.options do
+  banner <<~EOS
+    Generate and retrieve a log bundle.
+    #{}
+    Usage:
+        logbundle.rb [options] dest
+    #{}
+    dest must be a directory.
+    #{}
+    VIM connection options:
     EOS
 
-    rbvmomi_connection_opts
+  rbvmomi_connection_opts
 
-    text <<-EOS
-
-Other options:
-  EOS
+  text <<~EOS
+    #{}
+    Other options:
+    EOS
 end
 
-Trollop.die("must specify host") unless opts[:host]
-dest = ARGV[0] or abort("must specify destination directory")
+Optimist.die('must specify host') unless opts[:host]
+dest = ARGV[0] or abort('must specify destination directory')
 
-abort "destination is not a directory" unless File.directory? dest
+abort 'destination is not a directory' unless File.directory? dest
 
 vim = VIM.connect opts
 is_vc = vim.serviceContent.about.apiType == 'VirtualCenter'

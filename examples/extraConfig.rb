@@ -1,54 +1,58 @@
-require 'trollop'
+# frozen_string_literal: true
+# Copyright (c) 2011-2017 VMware, Inc.  All Rights Reserved.
+# SPDX-License-Identifier: MIT
+
+require 'optimist'
 require 'rbvmomi'
-require 'rbvmomi/trollop'
+require 'rbvmomi/optimist'
 
 VIM = RbVmomi::VIM
 CMDS = %w(list set)
 
-opts = Trollop.options do
-  banner <<-EOS
-View and modify VM extraConfig options.
+opts = Optimist.options do
+  banner <<~EOS
+    View and modify VM extraConfig options.
 
-Usage:
-    extraConfig.rb [options] VM list
-    extraConfig.rb [options] VM set key=value [key=value...]
+    Usage:
+        extraConfig.rb [options] VM list
+        extraConfig.rb [options] VM set key=value [key=value...]
 
-Commands: #{CMDS * ' '}
+    Commands: #{CMDS * ' '}
 
-VIM connection options:
+    VIM connection options:
     EOS
 
-    rbvmomi_connection_opts
+  rbvmomi_connection_opts
 
-    text <<-EOS
+  text <<~EOS
 
-VM location options:
+    VM location options:
     EOS
 
-    rbvmomi_datacenter_opt
+  rbvmomi_datacenter_opt
 
-    text <<-EOS
+  text <<~EOS
 
-Other options:
-  EOS
+    Other options:
+    EOS
 
   stop_on CMDS
 end
 
-vm_name = ARGV[0] or Trollop.die("no VM name given")
-cmd = ARGV[1] or Trollop.die("no command given")
-abort "invalid command" unless CMDS.member? cmd
-Trollop.die("must specify host") unless opts[:host]
+vm_name = ARGV[0] or Optimist.die('no VM name given')
+cmd = ARGV[1] or Optimist.die('no command given')
+abort 'invalid command' unless CMDS.member? cmd
+Optimist.die('must specify host') unless opts[:host]
 
 vim = VIM.connect opts
 
-dc = vim.serviceInstance.find_datacenter(opts[:datacenter]) or abort "datacenter not found"
-vm = dc.find_vm(vm_name) or abort "VM not found"
+dc = vim.serviceInstance.find_datacenter(opts[:datacenter]) or abort 'datacenter not found'
+vm = dc.find_vm(vm_name) or abort 'VM not found'
 
 case cmd
 when 'list'
   vm.config.extraConfig.each { |x| puts "#{x.key}: #{x.value}" }
 when 'set'
-  extraConfig = ARGV[2..-1].map { |x| x.split("=", 2) }.map { |k,v| { :key => k, :value => v } }
-  vm.ReconfigVM_Task(:spec => VIM.VirtualMachineConfigSpec(:extraConfig => extraConfig)).wait_for_completion
+  extraConfig = ARGV[2..-1].map { |x| x.split('=', 2) }.map { |k, v| { key: k, value: v } }
+  vm.ReconfigVM_Task(spec: VIM.VirtualMachineConfigSpec(extraConfig: extraConfig)).wait_for_completion
 end

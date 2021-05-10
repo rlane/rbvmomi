@@ -1,3 +1,7 @@
+# frozen_string_literal: true
+# Copyright (c) 2011-2017 VMware, Inc.  All Rights Reserved.
+# SPDX-License-Identifier: MIT
+
 class RbVmomi::VIM::ServiceInstance
   # Retrieve a Datacenter.
   # If no path is given the first datacenter will be returned.
@@ -21,16 +25,16 @@ class RbVmomi::VIM::ServiceInstance
   def wait_for_multiple_tasks interested, tasks
     version = ''
     interested = (interested + ['info.state']).uniq
-    task_props = Hash.new { |h,k| h[k] = {} }
+    task_props = Hash.new { |h, k| h[k] = {} }
 
-    filter = _connection.propertyCollector.CreateFilter :spec => {
-      :propSet => [{ :type => 'Task', :all => false, :pathSet => interested }],
-      :objectSet => tasks.map { |x| { :obj => x } },
-    }, :partialUpdates => false
+    filter = _connection.propertyCollector.CreateFilter spec: {
+      propSet: [{ type: 'Task', all: false, pathSet: interested }],
+      objectSet: tasks.map { |x| { obj: x } },
+    }, partialUpdates: false
 
     begin
-      until task_props.size == tasks.size and task_props.all? { |k,h| %w(success error).member? h['info.state'] }
-        result = _connection.propertyCollector.WaitForUpdates(:version => version)
+      until task_props.size == tasks.size and task_props.all? { |k, h| %w(success error).member? h['info.state'] }
+        result = _connection.propertyCollector.WaitForUpdates(version: version)
         version = result.version
         os = result.filterSet[0].objectSet
 

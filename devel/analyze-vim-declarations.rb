@@ -1,11 +1,16 @@
 #!/usr/bin/env ruby
-require 'nokogiri'
+# frozen_string_literal: true
 
+# Copyright (c) 2010-2017 VMware, Inc.  All Rights Reserved.
+# SPDX-License-Identifier: MIT
+
+require 'nokogiri'
+require 'pp'
 # :usage => analyze-vim-declarations.rb vim-declarations.xml foo-declarations.xml vmodl.db
 
 XML_FNS = ARGV[0...-1]
-abort "must specify path to vim-declarations.xml" if XML_FNS.empty?
-OUT_FN = ARGV[-1] or abort "must specify path to output database"
+abort 'must specify path to vim-declarations.xml' if XML_FNS.empty?
+OUT_FN = ARGV[-1] or abort 'must specify path to output database'
 
 XML_FNS.each do |x|
   abort "XML file #{x} does not exist" unless File.exists? x
@@ -14,7 +19,7 @@ end
 TYPES = {}
 VERSIONS = []
 
-ID2NAME = Hash.new { |h,k| fail "unknown type-id #{k.inspect}" }
+ID2NAME = Hash.new { |h, k| raise "unknown type-id #{k.inspect}" }
 
 ID2NAME.merge!({
   'java.lang.String' => 'xsd:string',
@@ -28,6 +33,7 @@ ID2NAME.merge!({
   'vmodl.DateTime' => 'xsd:dateTime',
   'vmodl.Binary' => 'xsd:base64Binary',
   'vmodl.Any' => 'xsd:anyType',
+  'vmodl.URI' => 'xsd:anyURI',
   'void' => nil,
 })
 
@@ -129,7 +135,9 @@ end
 
 XML_FNS.each do |fn|
   puts "parsing #{fn} ..."
-  xml = Nokogiri.parse(File.read(fn), nil, nil, Nokogiri::XML::ParseOptions::NOBLANKS)
+  xml_str = File.read(fn)
+  xml_str = xml_str.gsub(/\<description-html\>(.*?)\<\/description-html\>/m, '')
+  xml = Nokogiri.parse(xml_str, nil, nil, Nokogiri::XML::ParseOptions::NOBLANKS)
   xml.root.at('enums').children.each { |x| handle_enum x }
   xml.root.at('managed-objects').children.each { |x| handle_managed_object x }
   xml.root.at('data-objects').children.each { |x| handle_data_object x }
@@ -137,9 +145,11 @@ XML_FNS.each do |fn|
   #xml.root.at('definitions').at('version-types').children.each { |x| handle_version x }
 end
 
+#pp ID2NAME
+
 munge_fault = lambda { |x| true }
 
-TYPES.each do |k,t|
+TYPES.each do |k, t|
   case t['kind']
   when 'data'
     t['wsdl_base'] = t['base-type-id'] ? ID2NAME[t['base-type-id']] : 'DataObject'
@@ -157,26 +167,34 @@ TYPES.each do |k,t|
       x.delete 'type-id-ref'
       munge_fault[x]
     end
-    t['methods'].each do |mName,x|
+    t['methods'].each do |mName, x|
       if y = x['result']
-        y['wsdl_type'] = ID2NAME[y['type-id-ref']]
+        begin
+          y['wsdl_type'] = ID2NAME[y['type-id-ref']]
+        rescue Exception => ex
+          pp ex
+        end
         y.delete 'type-id-ref'
         munge_fault[y]
       end
       x['params'].each do |r|
-        r['wsdl_type'] = ID2NAME[r['type-id-ref']]
+        begin
+          r['wsdl_type'] = ID2NAME[r['type-id-ref']]
+        rescue Exception => ex
+          pp ex
+        end
         r.delete 'type-id-ref'
         munge_fault[r]
       end
     end
   when 'enum'
-  else fail
+  else raise
   end
 end
 
 db = {}
 
-TYPES.each do |k,t|
+TYPES.each do |k, t|
   db[k] = t
 end
 
@@ -191,7 +209,7 @@ if filename = ENV['VERSION_GRAPH']
     VERSIONS.each do |h|
       io.puts "\"#{h['vmodl-name']}\" [label=\"#{h['vmodl-name']} (#{h['version-id']})\"]"
       h['compatible'].each do |x|
-        x =~ /^interface / or fail x
+        x =~ /^interface / or raise x
         io.puts "\"#{h['vmodl-name']}\" -> \"#{$'}\""
       end
     end
